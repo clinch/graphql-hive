@@ -22,7 +22,11 @@ import {
 export class PersistedOperationManager {
   private logger: Logger;
 
-  constructor(logger: Logger, private storage: Storage, private authManager: AuthManager) {
+  constructor(
+    logger: Logger,
+    private storage: Storage,
+    private authManager: AuthManager,
+  ) {
     this.logger = logger.child({ source: 'PersistedOperationManager' });
   }
 

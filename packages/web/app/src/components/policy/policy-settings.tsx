@@ -81,16 +81,19 @@ function PolicySettingsListForm({
     return {
       allowOverrides: currentState?.allowOverrides ?? true,
       rules:
-        currentState?.rules.reduce((acc, ruleInstance) => {
-          return {
-            ...acc,
-            [ruleInstance.rule.id]: {
-              enabled: true,
-              severity: ruleInstance.severity,
-              config: ruleInstance.configuration,
-            },
-          };
-        }, {} as PolicyFormValues['rules']) ?? {},
+        currentState?.rules.reduce(
+          (acc, ruleInstance) => {
+            return {
+              ...acc,
+              [ruleInstance.rule.id]: {
+                enabled: true,
+                severity: ruleInstance.severity,
+                config: ruleInstance.configuration,
+              },
+            };
+          },
+          {} as PolicyFormValues['rules'],
+        ) ?? {},
     };
   }, [currentState]);
 
