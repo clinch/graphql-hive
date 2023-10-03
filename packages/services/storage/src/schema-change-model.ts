@@ -811,8 +811,8 @@ const FailedSchemaCompositionOutputFields = {
 
 const FailedSchemaCompositionInputFields = {
   ...FailedSchemaCompositionOutputFields,
-  compositeSchemaSDLChecksum: z.null(),
-  supergraphSDLChecksum: z.null(),
+  compositeSchemaSDLHash: z.null(),
+  supergraphSDLHash: z.null(),
 };
 
 const SuccessfulSchemaCompositionOutputFields = {
@@ -823,8 +823,8 @@ const SuccessfulSchemaCompositionOutputFields = {
 
 const SuccessfulSchemaCompositionInputFields = {
   ...SuccessfulSchemaCompositionOutputFields,
-  compositeSchemaSDLChecksum: z.string(),
-  supergraphSDLChecksum: z.string().nullable(),
+  compositeSchemaSDLHash: z.string(),
+  supergraphSDLHash: z.string().nullable(),
 };
 
 const SchemaCheckSharedPolicyFields = {
@@ -863,7 +863,7 @@ const SchemaCheckSharedOutputFields = {
 
 const SchemaCheckSharedInputFields = {
   ...SchemaCheckSharedOutputFields,
-  schemaSDLChecksum: z.string(),
+  schemaSDLHash: z.string(),
 };
 
 const SchemaCheckInputModel = z.union([

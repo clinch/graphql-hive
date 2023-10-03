@@ -8,7 +8,7 @@ import * as Sentry from '@sentry/node';
 import type { Span } from '@sentry/types';
 import * as Types from '../../../__generated__/types';
 import {
-  createSDLChecksum,
+  hashSDL,
   Organization,
   Project,
   ProjectType,
@@ -315,7 +315,7 @@ export class SchemaPublisher {
     if (checkResult.conclusion === SchemaCheckConclusion.Failure) {
       schemaCheck = await this.storage.createSchemaCheck({
         schemaSDL: sdl,
-        schemaSDLChecksum: createSDLChecksum(
+        schemaSDLHash: hashSDL(
           parse(sdl, {
             noLocation: true,
           }),
@@ -340,14 +340,14 @@ export class SchemaPublisher {
           : {
               schemaCompositionErrors: null,
               compositeSchemaSDL: checkResult.state.composition.compositeSchemaSDL,
-              compositeSchemaSDLChecksum: createSDLChecksum(
+              compositeSchemaSDLHash: hashSDL(
                 parse(checkResult.state.composition.compositeSchemaSDL, {
                   noLocation: true,
                 }),
               ),
               supergraphSDL: checkResult.state.composition.supergraphSDL,
-              supergraphSDLChecksum: checkResult.state.composition.supergraphSDL
-                ? createSDLChecksum(
+              supergraphSDLHash: checkResult.state.composition.supergraphSDL
+                ? hashSDL(
                     parse(checkResult.state.composition.supergraphSDL, {
                       noLocation: true,
                     }),
@@ -406,7 +406,7 @@ export class SchemaPublisher {
 
       schemaCheck = await this.storage.createSchemaCheck({
         schemaSDL: sdl,
-        schemaSDLChecksum: createSDLChecksum(
+        schemaSDLHash: hashSDL(
           parse(sdl, {
             noLocation: true,
           }),
@@ -422,14 +422,14 @@ export class SchemaPublisher {
         schemaPolicyErrors: null,
         schemaCompositionErrors: null,
         compositeSchemaSDL: composition.compositeSchemaSDL,
-        compositeSchemaSDLChecksum: createSDLChecksum(
+        compositeSchemaSDLHash: hashSDL(
           parse(composition.compositeSchemaSDL, {
             noLocation: true,
           }),
         ),
         supergraphSDL: composition.supergraphSDL,
-        supergraphSDLChecksum: composition.supergraphSDL
-          ? createSDLChecksum(
+        supergraphSDLHash: composition.supergraphSDL
+          ? hashSDL(
               parse(composition.supergraphSDL, {
                 noLocation: true,
               }),

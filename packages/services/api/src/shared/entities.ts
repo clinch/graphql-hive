@@ -117,7 +117,7 @@ export class GraphQLDocumentStringInvalidError extends Error {
   }
 }
 
-export function createSDLChecksum(sdl: DocumentNode): string {
+export function hashSDL(sdl: DocumentNode): string {
   const hasher = createHash('md5');
   hasher.update(print(sortDocumentNode(sdl)));
   return hasher.digest('hex');

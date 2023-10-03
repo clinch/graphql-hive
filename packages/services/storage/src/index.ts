@@ -3500,30 +3500,30 @@ export async function createStorage(connection: string, maximumPoolSize: number)
         const sdlStoreInserts: Array<Promise<unknown>> = [
           trx.query<unknown>(sql`
             INSERT INTO sdl_store (id, sdl)
-            VALUES (${args.schemaSDLChecksum}, ${args.schemaSDL})
+            VALUES (${args.schemaSDLHash}, ${args.schemaSDL})
             ON CONFLICT (id) DO NOTHING;
           `),
         ];
 
-        if (args.compositeSchemaSDLChecksum) {
+        if (args.compositeSchemaSDLHash) {
           sdlStoreInserts.push(
             trx.query<unknown>(sql`
                 INSERT INTO sdl_store (id, sdl)
-                VALUES (${args.compositeSchemaSDLChecksum}, ${args.compositeSchemaSDL})
+                VALUES (${args.compositeSchemaSDLHash}, ${args.compositeSchemaSDL})
                 ON CONFLICT (id) DO NOTHING;
             `),
           );
         }
 
-        if (args.supergraphSDLChecksum) {
+        if (args.supergraphSDLHash) {
           if (!args.supergraphSDL) {
-            throw new Error('supergraphSDLChecksum provided without supergraphSDL');
+            throw new Error('supergraphSDLHash provided without supergraphSDL');
           }
 
           sdlStoreInserts.push(
             trx.query<unknown>(sql`
                 INSERT INTO sdl_store (id, sdl)
-                VALUES (${args.supergraphSDLChecksum}, ${args.supergraphSDL})
+                VALUES (${args.supergraphSDLHash}, ${args.supergraphSDL})
                 ON CONFLICT (id) DO NOTHING;
             `),
           );
@@ -3552,7 +3552,7 @@ export async function createStorage(connection: string, maximumPoolSize: number)
           , "expires_at"
         )
         VALUES (
-            ${args.schemaSDLChecksum}
+            ${args.schemaSDLHash}
           , ${args.serviceName}
           , ${jsonify(args.meta)}
           , ${args.targetId}
@@ -3563,8 +3563,8 @@ export async function createStorage(connection: string, maximumPoolSize: number)
           , ${jsonify(args.safeSchemaChanges?.map(toSerializableSchemaChange))}
           , ${jsonify(args.schemaPolicyWarnings?.map(w => SchemaPolicyWarningModel.parse(w)))}
           , ${jsonify(args.schemaPolicyErrors?.map(w => SchemaPolicyWarningModel.parse(w)))}
-          , ${args.compositeSchemaSDLChecksum}
-          , ${args.supergraphSDLChecksum}
+          , ${args.compositeSchemaSDLHash}
+          , ${args.supergraphSDLHash}
           , ${args.isManuallyApproved}
           , ${args.manualApprovalUserId}
           , ${args.githubCheckRunId}
