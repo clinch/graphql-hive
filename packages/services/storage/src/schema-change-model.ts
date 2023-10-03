@@ -803,64 +803,52 @@ const SchemaChangeModelWithIsSafeBreakingChange = z.intersection(
 
 // Schema Checks
 
-const FailedSchemaCheckSharedFields = z.object({
-  isSuccess: z.literal(false),
-
-  breakingSchemaChanges: z.array(SchemaChangeModelWithIsSafeBreakingChange).nullable(),
-  safeSchemaChanges: z.array(SchemaChangeModelWithIsSafeBreakingChange).nullable(),
-
-  schemaPolicyWarnings: z.array(SchemaPolicyWarningModel).nullable(),
-  schemaPolicyErrors: z.array(SchemaPolicyWarningModel).nullable(),
-
-  isManuallyApproved: z.literal(false),
-  manualApprovalUserId: z.null(),
-});
-
-const FailedSchemaCheckWithCompositionErrors = z.object({
+const FailedSchemaCompositionOutputFields = {
   schemaCompositionErrors: z.array(SchemaCompositionErrorModel),
-
   compositeSchemaSDL: z.null(),
-  compositeSchemaSDLChecksum: z.null(),
   supergraphSDL: z.null(),
-  supergraphSDLChecksum: z.null(),
-});
+};
 
-const FailedSchemaCheckWithCompositeSchema = z.object({
+const FailedSchemaCompositionInputFields = {
+  ...FailedSchemaCompositionOutputFields,
+  compositeSchemaSDLChecksum: z.null(),
+  supergraphSDLChecksum: z.null(),
+};
+
+const SuccessfulSchemaCompositionOutputFields = {
   schemaCompositionErrors: z.null(),
   compositeSchemaSDL: z.string(),
-  compositeSchemaSDLChecksum: z.string(),
   supergraphSDL: z.string().nullable(),
+};
+
+const SuccessfulSchemaCompositionInputFields = {
+  ...SuccessfulSchemaCompositionOutputFields,
+  compositeSchemaSDLChecksum: z.string(),
   supergraphSDLChecksum: z.string().nullable(),
-});
+};
 
-const SuccessfulSchemaCheckSharedFields = z.object({
-  isSuccess: z.literal(true),
-  schemaCompositionErrors: z.null(),
-
-  safeSchemaChanges: z.array(SchemaChangeModelWithIsSafeBreakingChange).nullable(),
-  breakingSchemaChanges: z.array(SchemaChangeModelWithIsSafeBreakingChange).nullable(),
+const SchemaCheckSharedPolicyFields = {
   schemaPolicyWarnings: z.array(SchemaPolicyWarningModel).nullable(),
   schemaPolicyErrors: z.array(SchemaPolicyWarningModel).nullable(),
+};
 
-  compositeSchemaSDL: z.string(),
-  compositeSchemaSDLChecksum: z.string(),
-  supergraphSDL: z.string().nullable(),
-  supergraphSDLChecksum: z.string().nullable(),
-});
+const SchemaCheckSharedChangesFields = {
+  safeSchemaChanges: z.array(SchemaChangeModelWithIsSafeBreakingChange).nullable(),
+  breakingSchemaChanges: z.array(SchemaChangeModelWithIsSafeBreakingChange).nullable(),
+};
 
-const SuccessfulSchemaCheckWithApproval = z.object({
+const ManuallyApprovedSchemaCheckFields = {
   isManuallyApproved: z.literal(true),
   manualApprovalUserId: z.string().nullable(),
-});
+};
 
-const SuccessfulSchemaCheckWithoutApproval = z.object({
+const NotManuallyApprovedSchemaCheckFields = {
   isManuallyApproved: z.literal(false),
   manualApprovalUserId: z.null(),
-});
+};
 
-const SchemaCheckSharedInputFields = z.object({
+const SchemaCheckSharedOutputFields = {
   schemaSDL: z.string(),
-  schemaSDLChecksum: z.string(),
   serviceName: z.string().nullable(),
   targetId: z.string(),
   schemaVersionId: z.string().nullable(),
@@ -871,59 +859,76 @@ const SchemaCheckSharedInputFields = z.object({
     })
     .nullable(),
   githubCheckRunId: z.number().nullable(),
-});
+};
 
-const SchemaCheckSharedFieldsModel = SchemaCheckSharedInputFields.omit({
-  schemaSDLChecksum: true,
-});
+const SchemaCheckSharedInputFields = {
+  ...SchemaCheckSharedOutputFields,
+  schemaSDLChecksum: z.string(),
+};
 
 const SchemaCheckInputModel = z.union([
   z.intersection(
-    SchemaCheckSharedInputFields,
-    FailedSchemaCheckSharedFields,
-    z.union([FailedSchemaCheckWithCompositionErrors, FailedSchemaCheckWithCompositeSchema]),
-  ),
-  z.intersection(
-    SchemaCheckSharedInputFields,
-    SuccessfulSchemaCheckSharedFields,
-    z.union([SuccessfulSchemaCheckWithApproval, SuccessfulSchemaCheckWithoutApproval]),
-  ),
-]);
-
-const PersistedSchemaCheckPartialModel = z.object({
-  id: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
-
-export const SchemaCheckModel = z.union([
-  z.intersection(
-    z.intersection(
-      SchemaCheckSharedFieldsModel,
-      FailedSchemaCheckSharedFields,
-      PersistedSchemaCheckPartialModel,
-    ),
+    z.object({
+      isSuccess: z.literal(false),
+      ...SchemaCheckSharedPolicyFields,
+      ...SchemaCheckSharedChangesFields,
+      ...NotManuallyApprovedSchemaCheckFields,
+      ...SchemaCheckSharedInputFields,
+    }),
     z.union([
-      FailedSchemaCheckWithCompositionErrors.omit({
-        supergraphSDLChecksum: true,
-        compositeSchemaSDLChecksum: true,
-      }),
-      FailedSchemaCheckWithCompositeSchema.omit({
-        supergraphSDLChecksum: true,
-        compositeSchemaSDLChecksum: true,
-      }),
+      z.object(FailedSchemaCompositionInputFields),
+      z.object(SuccessfulSchemaCompositionInputFields),
     ]),
   ),
   z.intersection(
-    z.intersection(
-      SchemaCheckSharedFieldsModel,
-      SuccessfulSchemaCheckSharedFields.omit({
-        compositeSchemaSDLChecksum: true,
-        supergraphSDLChecksum: true,
-      }),
-      PersistedSchemaCheckPartialModel,
-    ),
-    z.union([SuccessfulSchemaCheckWithApproval, SuccessfulSchemaCheckWithoutApproval]),
+    z.object({
+      isSuccess: z.literal(true),
+      ...SchemaCheckSharedPolicyFields,
+      ...SchemaCheckSharedChangesFields,
+      ...SuccessfulSchemaCompositionInputFields,
+      ...SchemaCheckSharedInputFields,
+    }),
+    z.union([
+      z.object({ ...ManuallyApprovedSchemaCheckFields }),
+      z.object({ ...NotManuallyApprovedSchemaCheckFields }),
+    ]),
+  ),
+]);
+
+const PersistedSchemaCheckFields = {
+  id: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+};
+
+export const SchemaCheckModel = z.union([
+  z.intersection(
+    z.object({
+      isSuccess: z.literal(false),
+      ...SchemaCheckSharedPolicyFields,
+      ...SchemaCheckSharedChangesFields,
+      ...PersistedSchemaCheckFields,
+      ...NotManuallyApprovedSchemaCheckFields,
+      ...SchemaCheckSharedOutputFields,
+    }),
+    z.union([
+      z.object(FailedSchemaCompositionOutputFields),
+      z.object(SuccessfulSchemaCompositionOutputFields),
+    ]),
+  ),
+  z.intersection(
+    z.object({
+      isSuccess: z.literal(true),
+      ...SchemaCheckSharedPolicyFields,
+      ...SchemaCheckSharedChangesFields,
+      ...SuccessfulSchemaCompositionOutputFields,
+      ...PersistedSchemaCheckFields,
+      ...SchemaCheckSharedOutputFields,
+    }),
+    z.union([
+      z.object({ ...ManuallyApprovedSchemaCheckFields }),
+      z.object({ ...NotManuallyApprovedSchemaCheckFields }),
+    ]),
   ),
 ]);
 
