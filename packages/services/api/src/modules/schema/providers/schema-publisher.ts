@@ -333,9 +333,9 @@ export class SchemaPublisher {
           ? {
               schemaCompositionErrors: checkResult.state.composition.errors,
               compositeSchemaSDL: null,
-              compositeSchemaSDLChecksum: null,
+              compositeSchemaSDLHash: null,
               supergraphSDL: null,
-              supergraphSDLChecksum: null,
+              supergraphSDLHash: null,
             }
           : {
               schemaCompositionErrors: null,
