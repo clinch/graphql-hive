@@ -3496,9 +3496,44 @@ export async function createStorage(connection: string, maximumPoolSize: number)
       return DocumentCollectionDocumentModel.parse(result);
     },
     async createSchemaCheck(args) {
-      const result = await pool.maybeOne<unknown>(sql`
+      const result = await pool.transaction(async trx => {
+        const sdlStoreInserts: Array<Promise<unknown>> = [
+          trx.query<unknown>(sql`
+            INSERT INTO sdl_store (id, sdl)
+            VALUES (${args.schemaSDLChecksum}, ${args.schemaSDL})
+            ON CONFLICT (id) DO NOTHING;
+          `),
+        ];
+
+        if (args.compositeSchemaSDLChecksum) {
+          sdlStoreInserts.push(
+            trx.query<unknown>(sql`
+                INSERT INTO sdl_store (id, sdl)
+                VALUES (${args.compositeSchemaSDLChecksum}, ${args.compositeSchemaSDL})
+                ON CONFLICT (id) DO NOTHING;
+            `),
+          );
+        }
+
+        if (args.supergraphSDLChecksum) {
+          if (!args.supergraphSDL) {
+            throw new Error('supergraphSDLChecksum provided without supergraphSDL');
+          }
+
+          sdlStoreInserts.push(
+            trx.query<unknown>(sql`
+                INSERT INTO sdl_store (id, sdl)
+                VALUES (${args.supergraphSDLChecksum}, ${args.supergraphSDL})
+                ON CONFLICT (id) DO NOTHING;
+            `),
+          );
+        }
+
+        await Promise.all(sdlStoreInserts);
+
+        return trx.one<{ id: string }>(sql`
         INSERT INTO "public"."schema_checks" (
-          "schema_sdl"
+            "schema_sdl_store_id"
           , "service_name"
           , "meta"
           , "target_id"
@@ -3509,15 +3544,15 @@ export async function createStorage(connection: string, maximumPoolSize: number)
           , "safe_schema_changes"
           , "schema_policy_warnings"
           , "schema_policy_errors"
-          , "composite_schema_sdl"
-          , "supergraph_sdl"
+          , "composite_schema_sdl_store_id"
+          , "supergraph_sdl_store_id"
           , "is_manually_approved"
           , "manual_approval_user_id"
           , "github_check_run_id"
           , "expires_at"
         )
         VALUES (
-          ${args.schemaSDL}
+            ${args.schemaSDLChecksum}
           , ${args.serviceName}
           , ${jsonify(args.meta)}
           , ${args.targetId}
@@ -3528,28 +3563,40 @@ export async function createStorage(connection: string, maximumPoolSize: number)
           , ${jsonify(args.safeSchemaChanges?.map(toSerializableSchemaChange))}
           , ${jsonify(args.schemaPolicyWarnings?.map(w => SchemaPolicyWarningModel.parse(w)))}
           , ${jsonify(args.schemaPolicyErrors?.map(w => SchemaPolicyWarningModel.parse(w)))}
-          , ${args.compositeSchemaSDL}
-          , ${args.supergraphSDL}
+          , ${args.compositeSchemaSDLChecksum}
+          , ${args.supergraphSDLChecksum}
           , ${args.isManuallyApproved}
           , ${args.manualApprovalUserId}
           , ${args.githubCheckRunId}
           , ${args.expiresAt?.toISOString() ?? null}
         )
-        RETURNING
-          ${schemaCheckSQLFields}
+        RETURNING id
       `);
+      });
 
-      return SchemaCheckModel.parse(result);
+      const check = await this.findSchemaCheck({
+        schemaCheckId: result.id,
+        targetId: args.targetId,
+      });
+
+      if (!check) {
+        throw new Error('Failed to fetch newly created schema check');
+      }
+
+      return check;
     },
     async findSchemaCheck(args) {
       const result = await pool.maybeOne<unknown>(sql`
         SELECT
           ${schemaCheckSQLFields}
         FROM
-          "public"."schema_checks"
+          "public"."schema_checks" as c
+        LEFT JOIN "public"."sdl_store" as s_schema            ON s_schema."id" = c."schema_sdl_store_id"
+        LEFT JOIN "public"."sdl_store" as s_composite_schema  ON s_composite_schema."id" = c."composite_schema_sdl_store_id"
+        LEFT JOIN "public"."sdl_store" as s_supergraph        ON s_supergraph."id" = c."supergraph_sdl_store_id"
         WHERE
-          "id" = ${args.schemaCheckId}
-          AND "target_id" = ${args.targetId}
+          c."id" = ${args.schemaCheckId}
+          AND c."target_id" = ${args.targetId}
       `);
 
       if (result == null) {
@@ -3559,25 +3606,40 @@ export async function createStorage(connection: string, maximumPoolSize: number)
       return SchemaCheckModel.parse(result);
     },
     async setSchemaCheckGithubCheckRunId(args) {
-      const result = await pool.maybeOne<unknown>(sql`
+      const updateResult = await pool.maybeOne<{
+        id: string;
+      }>(sql`
         UPDATE
           "public"."schema_checks"
         SET
           "github_check_run_id" = ${args.githubCheckRunId}
         WHERE
           "id" = ${args.schemaCheckId}
-        RETURNING
-          ${schemaCheckSQLFields}
+        RETURNING id
       `);
 
-      if (result == null) {
+      if (updateResult == null) {
         return null;
       }
+
+      const result = await pool.maybeOne<unknown>(sql`
+        SELECT
+          ${schemaCheckSQLFields}
+        FROM
+          "public"."schema_checks" as c
+        LEFT JOIN "public"."sdl_store" as s_schema            ON s_schema."id" = c."schema_sdl_store_id"
+        LEFT JOIN "public"."sdl_store" as s_composite_schema  ON s_composite_schema."id" = c."composite_schema_sdl_store_id"
+        LEFT JOIN "public"."sdl_store" as s_supergraph        ON s_supergraph."id" = c."supergraph_sdl_store_id"
+        WHERE
+          c."id" = ${updateResult.id}
+      `);
 
       return SchemaCheckModel.parse(result);
     },
     async approveFailedSchemaCheck(args) {
-      const result = await pool.maybeOne<unknown>(sql`
+      const updateResult = await pool.maybeOne<{
+        id: string;
+      }>(sql`
         UPDATE
           "public"."schema_checks"
         SET
@@ -3588,13 +3650,24 @@ export async function createStorage(connection: string, maximumPoolSize: number)
           "id" = ${args.schemaCheckId}
           AND "is_success" = false
           AND "schema_composition_errors" IS NULL
-        RETURNING
-          ${schemaCheckSQLFields}
+        RETURNING id
       `);
 
-      if (result == null) {
+      if (updateResult == null) {
         return null;
       }
+
+      const result = await pool.maybeOne<unknown>(sql`
+        SELECT
+          ${schemaCheckSQLFields}
+        FROM
+          "public"."schema_checks" as c
+        LEFT JOIN "public"."sdl_store" as s_schema            ON s_schema."id" = c."schema_sdl_store_id"
+        LEFT JOIN "public"."sdl_store" as s_composite_schema  ON s_composite_schema."id" = c."composite_schema_sdl_store_id"
+        LEFT JOIN "public"."sdl_store" as s_supergraph        ON s_supergraph."id" = c."supergraph_sdl_store_id"
+        WHERE
+          c."id" = ${updateResult.id}
+      `);
 
       return SchemaCheckModel.parse(result);
     },
@@ -3614,26 +3687,29 @@ export async function createStorage(connection: string, maximumPoolSize: number)
         SELECT
           ${schemaCheckSQLFields}
         FROM
-          "public"."schema_checks"
+          "public"."schema_checks" as c
+        LEFT JOIN "public"."sdl_store" as s_schema            ON s_schema."id" = c."schema_sdl_store_id"
+        LEFT JOIN "public"."sdl_store" as s_composite_schema  ON s_composite_schema."id" = c."composite_schema_sdl_store_id"
+        LEFT JOIN "public"."sdl_store" as s_supergraph        ON s_supergraph."id" = c."supergraph_sdl_store_id"
         WHERE
-          "target_id" = ${args.targetId}
+          c."target_id" = ${args.targetId}
           ${
             cursor
               ? sql`
                 AND (
                   (
-                    "created_at" = ${cursor.createdAt}
-                    AND "id" < ${cursor.id}
+                    c."created_at" = ${cursor.createdAt}
+                    AND c."id" < ${cursor.id}
                   )
-                  OR "created_at" < ${cursor.createdAt}
+                  OR c."created_at" < ${cursor.createdAt}
                 )
               `
               : sql``
           }
         ORDER BY
-          "target_id" ASC
-          , "created_at" DESC
-          , "id" DESC
+          c."target_id" ASC
+          , c."created_at" DESC
+          , c."id" DESC
         LIMIT ${limit + 1}
       `);
 
@@ -4113,25 +4189,25 @@ function toSerializableSchemaChange(change: {
 }
 
 const schemaCheckSQLFields = sql`
-  "id"
-  , to_json("created_at") as "createdAt"
-  , to_json("updated_at") as "updatedAt"
-  , "schema_sdl" as "schemaSDL"
-  , "service_name" as "serviceName"
-  , "meta"
-  , "target_id" as "targetId"
-  , "schema_version_id" as "schemaVersionId"
-  , "is_success" as "isSuccess"
-  , "schema_composition_errors" as "schemaCompositionErrors"
-  , "breaking_schema_changes" as "breakingSchemaChanges"
-  , "safe_schema_changes" as "safeSchemaChanges"
-  , "schema_policy_warnings" as "schemaPolicyWarnings"
-  , "schema_policy_errors" as "schemaPolicyErrors"
-  , "composite_schema_sdl" as "compositeSchemaSDL"
-  , "supergraph_sdl" as "supergraphSDL"
-  , "github_check_run_id" as "githubCheckRunId"
-  , coalesce("is_manually_approved", false) as "isManuallyApproved"
-  , "manual_approval_user_id" as "manualApprovalUserId"
+    c."id"
+  , to_json(c."created_at") as "createdAt"
+  , to_json(c."updated_at") as "updatedAt"
+  , coalesce(c."schema_sdl", s_schema."sdl") as "schemaSDL"
+  , c."service_name" as "serviceName"
+  , c."meta"
+  , c."target_id" as "targetId"
+  , c."schema_version_id" as "schemaVersionId"
+  , c."is_success" as "isSuccess"
+  , c."schema_composition_errors" as "schemaCompositionErrors"
+  , c."breaking_schema_changes" as "breakingSchemaChanges"
+  , c."safe_schema_changes" as "safeSchemaChanges"
+  , c."schema_policy_warnings" as "schemaPolicyWarnings"
+  , c."schema_policy_errors" as "schemaPolicyErrors"
+  , coalesce(c."composite_schema_sdl", s_composite_schema."sdl") as "compositeSchemaSDL"
+  , coalesce(c."supergraph_sdl", s_supergraph."sdl") as "supergraphSDL"
+  , c."github_check_run_id" as "githubCheckRunId"
+  , coalesce(c."is_manually_approved", false) as "isManuallyApproved"
+  , c."manual_approval_user_id" as "manualApprovalUserId"
 `;
 
 const targetSQLFields = sql`
