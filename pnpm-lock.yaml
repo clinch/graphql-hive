@@ -677,8 +677,8 @@ importers:
         specifier: 5.0.0-beta.2
         version: 5.0.0-beta.2
       supertokens-node:
-        specifier: 14.1.3
-        version: 14.1.3
+        specifier: 14.1.4
+        version: 14.1.4
       tslib:
         specifier: 2.6.2
         version: 2.6.2
@@ -1668,17 +1668,17 @@ importers:
         specifier: 2.0.0
         version: 2.0.0
       supertokens-auth-react:
-        specifier: 0.33.1
-        version: 0.33.1(react-dom@18.2.0)(react@18.2.0)(supertokens-web-js@0.6.0)
+        specifier: 0.35.5
+        version: 0.35.5(react-dom@18.2.0)(react@18.2.0)(supertokens-web-js@0.8.0)
       supertokens-js-override:
         specifier: 0.0.4
         version: 0.0.4
       supertokens-node:
-        specifier: 14.1.3
-        version: 14.1.3
+        specifier: 14.1.4
+        version: 14.1.4
       supertokens-web-js:
-        specifier: 0.6.0
-        version: 0.6.0
+        specifier: 0.8.0
+        version: 0.8.0
       tailwind-merge:
         specifier: 1.14.0
         version: 1.14.0
@@ -3103,7 +3103,7 @@ packages:
       debug: 4.3.4(supports-color@8.1.1)
       gensync: 1.0.0-beta.2
       json5: 2.2.3
-      semver: 6.3.0
+      semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3204,7 +3204,7 @@ packages:
       '@babel/helper-validator-option': 7.21.0
       browserslist: 4.21.5
       lru-cache: 5.1.1
-      semver: 6.3.0
+      semver: 6.3.1
     dev: true
 
   /@babel/helper-compilation-targets@7.22.15:
@@ -25125,14 +25125,9 @@ packages:
       nodemailer-fetch: 1.6.0
     dev: true
 
-  /nodemailer@6.9.3:
-    resolution: {integrity: sha512-fy9v3NgTzBngrMFkDsKEj0r02U7jm6XfC3b52eoNV+GCrGj+s8pt5OqhiJdWKuw51zCTdiNR/IUD1z33LIIGpg==}
-    engines: {node: '>=6.0.0'}
-
   /nodemailer@6.9.5:
     resolution: {integrity: sha512-/dmdWo62XjumuLc5+AYQZeiRj+PRR8y8qKtFCOyuOl1k/hckZd8durUUHs/ucKx6/8kN+wFxqKJlQ/LK/qR5FA==}
     engines: {node: '>=6.0.0'}
-    dev: true
 
   /noms@0.0.0:
     resolution: {integrity: sha512-lNDU9VJaOPxUmXcLb+HQFeUgQQPtMI24Gt6hgfuMHRJgMRHMF/qZ4HJD3GDru4sSw9IQl2jPjAYnQrdIeLbwow==}
@@ -28654,11 +28649,6 @@ packages:
     resolution: {integrity: sha512-sauaDf/PZdVgrLTNYHRtpXa1iRiKcaebiKQ1BJdpQlWH2lCvexQdX55snPFyK7QzpudqbCI0qXFfOasHdyNDGQ==}
     hasBin: true
 
-  /semver@6.3.0:
-    resolution: {integrity: sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==}
-    hasBin: true
-    dev: true
-
   /semver@6.3.1:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
     hasBin: true
@@ -29693,27 +29683,27 @@ packages:
       ts-interface-checker: 0.1.13
     dev: true
 
-  /supertokens-auth-react@0.33.1(react-dom@18.2.0)(react@18.2.0)(supertokens-web-js@0.6.0):
-    resolution: {integrity: sha512-TEzwW7k+ACZ4kkmRvOm6U8VAub0ykcCamBL0n43zOvjo+K+1NIhRycbpFdAh1sadk9EWzTXRM7wOEq6TRtfVEg==}
+  /supertokens-auth-react@0.35.5(react-dom@18.2.0)(react@18.2.0)(supertokens-web-js@0.8.0):
+    resolution: {integrity: sha512-SbjKqKLdPdoerxRg9rr4UqFk4YPgIOEf81R3E1adO4UbKyS3AlqHjPgLdJh2MY7Z6on4tGueTc1wvWFfCEKl7g==}
     engines: {node: '>=16.0.0', npm: '>=8'}
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
-      supertokens-web-js: ^0.6.0
+      supertokens-web-js: ^0.8.0
     dependencies:
       intl-tel-input: 17.0.19
       prop-types: 15.8.1
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
       supertokens-js-override: 0.0.4
-      supertokens-web-js: 0.6.0
+      supertokens-web-js: 0.8.0
     dev: false
 
   /supertokens-js-override@0.0.4:
     resolution: {integrity: sha512-r0JFBjkMIdep3Lbk3JA+MpnpuOtw4RSyrlRAbrzMcxwiYco3GFWl/daimQZ5b1forOiUODpOlXbSOljP/oyurg==}
 
-  /supertokens-node@14.1.3:
-    resolution: {integrity: sha512-cwnzmJMHRQvqiztdRITlkK0o2psAw2wAYP+tJVYyIk4fm/93Yb0e9QMekuCJnhZAP0KXaZi+PGjA6F5FEE123Q==}
+  /supertokens-node@14.1.4:
+    resolution: {integrity: sha512-Hf/z4r1W9Pk6rlRp7Pa9ibgsqnIy0tc4kzZk72gZ/fHArNKb+G0BZI3JJ5Vm8TrOZx5+DabLN40xahx2qLwalQ==}
     dependencies:
       content-type: 1.0.5
       cookie: 0.4.0
@@ -29722,7 +29712,7 @@ packages:
       inflation: 2.0.0
       jose: 4.14.4
       libphonenumber-js: 1.10.14
-      nodemailer: 6.9.3
+      nodemailer: 6.9.5
       psl: 1.8.0
       raw-body: 2.5.2
       supertokens-js-override: 0.0.4
@@ -29731,15 +29721,15 @@ packages:
       - encoding
       - supports-color
 
-  /supertokens-web-js@0.6.0:
-    resolution: {integrity: sha512-2KOgWNGanh+/zpdaFQgiA9dQa6T9wA6LcoB6m1BTZ7JIqR3mYmpLD5uu8ERtISNAGUjcXziON/Fp5ZnlBByCcw==}
+  /supertokens-web-js@0.8.0:
+    resolution: {integrity: sha512-kkvuPbdy1I0e7nejVJAhpPJhR5h7EUHdn7Fh1YqfSjZfSJh46J3JU2qWGCgSDVZuD1hSuUKb6skF9CQnltHWrQ==}
     dependencies:
       supertokens-js-override: 0.0.4
-      supertokens-website: 17.0.1
+      supertokens-website: 17.0.4
     dev: false
 
-  /supertokens-website@17.0.1:
-    resolution: {integrity: sha512-RCBPIj4A5mVdiYEL6ArvFrZcQ8ByENe3FJEpBXIP0SB++kLuV54zU8lfL99kHcc9kbOHTdUjpWxrwEpvlTTPUQ==}
+  /supertokens-website@17.0.4:
+    resolution: {integrity: sha512-ayWhEFvspUe26YhM1bq11ssEpnFCZIsoHZtJwJHgHsoflfMUKdgrzOix/bboI0PWJeNTUphHyZebw0ApctaS1Q==}
     dependencies:
       browser-tabs-lock: 1.3.0
       supertokens-js-override: 0.0.4
